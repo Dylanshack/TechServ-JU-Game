@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TechServ NES Game</title>
+  <style>
+    body { background: black; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    canvas { image-rendering: pixelated; border: 4px solid #fff; }
+  </style>
+</head>
+<body>
+  <script src="https://unpkg.com/jsnes@0.8.0/dist/jsnes.min.js"></script>
+  <script>
+    const base64ROM = "VEVDSFNFUlZfUkVBTF9ST01fQklOQVJZX0NPTlRFTlQ=";
+    const binaryROM = Uint8Array.from(atob(base64ROM), c => c.charCodeAt(0));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 240;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    const nes = new jsnes.NES({
+      onFrame: function(frameBuffer) {
+        const imageData = ctx.getImageData(0, 0, 256, 240);
+        for (let i = 0; i < frameBuffer.length; i++) {
+          imageData.data[i * 4 + 0] = (frameBuffer[i] >> 16) & 0xFF;
+          imageData.data[i * 4 + 1] = (frameBuffer[i] >> 8) & 0xFF;
+          imageData.data[i * 4 + 2] = frameBuffer[i] & 0xFF;
+          imageData.data[i * 4 + 3] = 0xFF;
+        }
+        ctx.putImageData(imageData, 0, 0);
+      },
+      onStatusUpdate: function() {},
+      onAudioSample: function() {}
+    });
+
+    nes.loadROM(binaryROM);
+
+    window.addEventListener("keydown", e => nes.buttonDown(1, jsnes.Controller[`KEY_${e.code}`]));
+    window.addEventListener("keyup", e => nes.buttonUp(1, jsnes.Controller[`KEY_${e.code}`]));
+  </script>
+</body>
+</html>
